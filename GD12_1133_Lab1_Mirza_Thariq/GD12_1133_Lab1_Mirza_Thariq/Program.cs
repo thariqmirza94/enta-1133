@@ -4,7 +4,7 @@
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello");
+            Console.WriteLine("Hello Noah");
             Console.WriteLine("binary - 00000000, decimal - 0, hexadecimal - 00");
             Console.WriteLine("binary - 00000001, decimal - 1, hexadecimal - 01");
             Console.WriteLine("binary - 00000010, decimal - 2, hexadecimal - 02");
@@ -15,7 +15,7 @@
             Console.WriteLine("binary - 01000000, decimal - 64, hexadecimal - 40");
             Console.WriteLine("binary - 01100100, decimal - 100, hexadecimal - 64");
             Console.WriteLine("binary - 11111111, decimal - 255, hexadecimal - FF");
-            Console.WriteLine("Goodbye");
+            Console.WriteLine("Goodbye from Thariq on 06-09-2024");
         }
     }
 }
