@@ -53,8 +53,8 @@ namespace DieGame.Scripts
             new Item("Small Health Pill", (player) => {
                 player.hp = Math.Min(100, player.hp + (int)(player.hp * 0.20)); // Increase HP by 20%
                 Console.WriteLine("Small Health Pill used. HP increased by 20%.");
-                })
-            };
+            })
+        };
             return items.OrderBy(x => new Random().Next()).Take(numberOfItems).ToList();
         }
     }

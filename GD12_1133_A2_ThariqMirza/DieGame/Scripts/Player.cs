@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,7 +11,7 @@ namespace DieGame.Scripts
     {
         public int hp = 100;
         public int poisonMeter = 0;
-        public Inventory inventory = new Inventory();
+        public Inventory inventory = new Inventory();  // Add Inventory property
 
         public void TakePill()
         {
@@ -33,6 +34,12 @@ namespace DieGame.Scripts
             {
                 Console.WriteLine("You died.");
             }
+        }
+
+        // Add AddItem method to Player class
+        public void AddItem(Item item)
+        {
+            player.inventory.AddItem(item);
         }
     }
 }

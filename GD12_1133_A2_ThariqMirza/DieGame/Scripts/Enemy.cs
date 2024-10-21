@@ -47,5 +47,12 @@ namespace DieGame.Scripts
         {
             return hp <= 0;
         }
+
+        // Add RollDice method to Enemy class
+        public int RollDice()
+        {
+            Random random = new Random();
+            return random.Next(1, 7);
+        }
     }
 }

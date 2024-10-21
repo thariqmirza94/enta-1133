@@ -8,7 +8,7 @@ namespace DieGame.Scripts
 {
     class Inventory
     {
-        private List<Item> items = new List<Item>();
+        public List<Item> items = new List<Item>();  // Change to public
 
         public void AddItem(Item item)
         {
