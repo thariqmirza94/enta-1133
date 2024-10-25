@@ -6,53 +6,52 @@ using System.Threading.Tasks;
 
 namespace DieGame.Scripts
 {
-    class Enemy
+    public class Enemy
     {
-        public int hp;
-        public int poisonMeter = 0;
-        public string difficultyLevel;
+        public int hp = 50;  // Initial enemy health
+        private static Random random = new Random();  // Shared random instance
 
-        public Enemy(string difficultyLevel)
+        // Method to check if the enemy is still alive
+        public bool IsAlive()
         {
-            this.difficultyLevel = difficultyLevel;
-            SetupEnemyProperties();
+            return hp > 0;
         }
 
-        void SetupEnemyProperties()
+        // Method for the enemy to roll a dice (random d4, d6, d8, or d10)
+        public int RollDice()
         {
-            switch (difficultyLevel)
+            int[] diceSides = { 4, 6, 8, 10 };  // Available dice types
+            int diceType = diceSides[random.Next(diceSides.Length)];
+            return random.Next(1, diceType + 1);  // Roll the dice and return the result
+        }
+
+        // Method to apply damage to the enemy
+        public void TakeDamage(int damage)
+        {
+            hp -= damage;
+            if (hp <= 0)
             {
-                case "Easy":
-                    hp = 30;
-                    break;
-                case "Medium":
-                    hp = 50;
-                    break;
-                case "Hard":
-                    hp = 70;
-                    break;
-                case "Boss":
-                    hp = 100;
-                    break;
+                Console.WriteLine("The enemy has been defeated!");
+            }
+            else
+            {
+                Console.WriteLine($"The enemy has {hp} HP remaining.");
             }
         }
 
+        // Enemy attacks the player
+        public void Attack(Player player)
+        {
+            Console.WriteLine("The enemy attacks!");
+            int damage = RollDice();  // Use a random dice roll for the attack
+            player.TakeDamage(damage);  // Apply damage to the player
+        }
+
+        // The enemy takes a pill, which could affect them in some way
         public void TakePill()
         {
-            poisonMeter = Math.Min(100, poisonMeter + 10);
-            Console.WriteLine($"Enemy took a pill. Enemy Poison meter: {poisonMeter}%.");
-        }
-
-        public bool IsDead()
-        {
-            return hp <= 0;
-        }
-
-        // Add RollDice method to Enemy class
-        public int RollDice()
-        {
-            Random random = new Random();
-            return random.Next(1, 7);
+            Console.WriteLine("The enemy takes a pill...");
+            // Add custom logic for pill effects on the enemy, if needed
         }
     }
 }

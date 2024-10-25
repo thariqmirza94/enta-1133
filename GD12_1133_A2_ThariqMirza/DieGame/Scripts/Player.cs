@@ -7,39 +7,36 @@ using System.Threading.Tasks;
 
 namespace DieGame.Scripts
 {
-    class Player
+    public class Player
     {
-        public int hp = 100;
-        public int poisonMeter = 0;
-        public Inventory inventory = new Inventory();  // Add Inventory property
+        public int hp = 100;  // Player health points
+        public int poisonMeter = 0;  // Poison meter starts at 0%
+        public Inventory Inventory { get; } = new Inventory();  // Player's inventory
 
+        // Method to allow the player to take a pill
         public void TakePill()
         {
-            poisonMeter = Math.Min(100, poisonMeter + 10);  // Pill adds 10 poison by default
-            Console.WriteLine($"You took a pill. Poison meter: {poisonMeter}%.");
-            if (poisonMeter > 50)
-            {
-                Console.WriteLine("Despair thoughts: Your sanity is fading...");
-            }
+            Console.WriteLine("You take a pill...");
+            poisonMeter = Math.Min(100, poisonMeter + new Random().Next(5, 15));  // Randomly increase poison meter between 5% and 15%
+            Console.WriteLine($"Poison meter: {poisonMeter}%");
+
             if (poisonMeter >= 100)
             {
-                Console.WriteLine("You lost your mind!");
+                Console.WriteLine("Your mind snaps as the poison takes over...");
             }
         }
 
-        public void CheckHealth()
+        // Apply damage to the player
+        public void TakeDamage(int damage)
         {
-            Console.WriteLine($"Player HP: {hp}, Poison Meter: {poisonMeter}%");
-            if (hp <= 0)
-            {
-                Console.WriteLine("You died.");
-            }
+            hp = Math.Max(0, hp - damage);
+            Console.WriteLine($"You took {damage} damage. Your HP is now {hp}.");
         }
 
-        // Add AddItem method to Player class
-        public void AddItem(Item item)
+        // Display the player's current status (HP and poison meter)
+        public void CheckStatus()
         {
-            player.inventory.AddItem(item);
+            Console.WriteLine($"HP: {hp}, Poison Meter: {poisonMeter}%");
         }
     }
 }

@@ -8,22 +8,12 @@ namespace DieGame.Scripts
 {
     public class DiceRoller
     {
-        public int NumberOfSides = 6;
+        private static Random random = new Random();  // Static Random instance to avoid reseeding issues
 
-        // Creating instances
-        Random random = new Random(); // random Instance
-
-        // Creating the variable Roll that will generate a random number every time
-        public int Roll()
+        // Roll a dice with a given number of sides
+        public static int Roll(int numberOfSides)
         {
-            int randomRoll = random.Next(1, NumberOfSides + 1);
-            return randomRoll;
-        }
-
-        // Creating the function RollScore that add variable Score + variable Roll
-        public void RollScore(ref int playerScore)
-        {
-            playerScore += Roll();
+            return random.Next(1, numberOfSides + 1);  // Returns a random number between 1 and numberOfSides
         }
     }
 }

@@ -1,292 +1,243 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DieGame.Scripts;
 
-namespace DieGame.Scripts
+public class GameManager
 {
-    class GameManager
+    private Player player = new Player();  // Initialize Player instance
+    private Room[,] grid = new Room[3, 3];  // 3x3 grid representing the rooms of the asylum
+    private int playerX = 1;  // Player starts in the middle of the grid (1,1)
+    private int playerY = 1;
+
+    private static Random random = new Random();  // Shared Random instance for dice rolls
+
+    // Method to start the game
+    public void StartGame()
     {
-        Player player;  // Change to nullable
-        Room[] rooms;  // Change to nullable
+        SetupGrid();  // Initialize the room grid
+        DisplayIntro();  // Display a welcome message and game intro
 
-        public void StartGame()
+        // Main game loop
+        while (player.hp > 0 && player.poisonMeter < 100)
         {
-            player = new Player();
-            rooms = SetupRooms();
+            Room currentRoom = grid[playerX, playerY];  // Room can't be null after initialization
+            Console.WriteLine($"You are in the {currentRoom.RoomName}.");
+            currentRoom.OnRoomEntered();  // Call the room's entry behavior
 
-            Console.WriteLine("Welcome to the game.");
-            AllowPlayerToSearchRoom(rooms[0]);  // Player starts by searching Room 1
+            // Check if the room is a CombatRoom and start combat automatically
+            if (currentRoom is CombatRoom combatRoom)
+            {
+                StartPillDiceGame(combatRoom);  // Automatically start combat if it's a CombatRoom
+            }
+            else
+            {
+                // Present player with available options
+                Console.WriteLine("What would you like to do?");
+                Console.WriteLine("1: Move to another room");
+                Console.WriteLine("2: Search the room");
+                Console.WriteLine("3: Check your inventory");
+                Console.WriteLine("4: Check your status");
+                Console.WriteLine("5: Quit game");
+                string? input = Console.ReadLine();  // Nullable input handling
 
-            while (player?.hp > 0 && player?.poisonMeter < 100)
-            {  // Check for null
-                foreach (var room in rooms)
+                if (input != null)
                 {
-                    if (room.enemy.IsDead()) continue;  // Skip already defeated enemies
-                    StartRound(room);
-                    if (player?.poisonMeter >= 100 || player?.hp <= 0)
+                    // Handle player's input
+                    switch (input)
                     {
-                        break;
+                        case "1":
+                            MoveToNextRoom();  // Move to another room
+                            break;
+                        case "2":
+                            SearchRoom();  // Search the room for items
+                            break;
+                        case "3":
+                            player.Inventory.ShowInventory();  // Show player's inventory
+                            break;
+                        case "4":
+                            player.CheckStatus();  // Show player's current status (HP, poison meter)
+                            break;
+                        case "5":
+                            Console.WriteLine("Quitting the game...");
+                            return;  // Exit the game
+                        default:
+                            Console.WriteLine("Invalid input.");
+                            break;
                     }
                 }
-            }
-
-            if (player?.poisonMeter >= 100)
-            {
-                TriggerGameOver("madness");
-            }
-            else if (player?.hp <= 0)
-            {
-                TriggerGameOver("death");
-            }
-            else
-            {
-                Console.WriteLine("Congratulations, you survived the game!");
-            }
-        }
-
-        private Room[] SetupRooms()
-        {
-            Room[] rooms = new Room[9];
-            rooms[0] = new Room(1, "Easy");
-            rooms[1] = new Room(2, "Medium");
-            rooms[2] = new Room(3, "Medium");
-            rooms[3] = new Room(4, "Hard");
-            rooms[4] = new Room(5, "Boss");
-            return rooms;
-        }
-
-        private void AllowPlayerToSearchRoom(Room room)
-        {
-            List<Item> foundItems = room.SearchRoom();
-            foreach (var item in foundItems)
-            {
-                player.AddItem(item);
-            }
-        }
-
-        private void StartRound(Room room)
-        {
-            Enemy enemy = room.enemy;
-            Console.WriteLine($"You enter Room {room.roomNumber}, facing an enemy with difficulty: {enemy.difficultyLevel}");
-
-            int playerScore = RollDice();
-            int enemyScore = enemy.RollDice();  // Add RollDice method to Enemy class
-            Console.WriteLine($"Your score: {playerScore}, Enemy's score: {enemyScore}");
-
-            if (playerScore > enemyScore)
-            {
-                Console.WriteLine("You won the round!");
-                AllowPlayerToSearchRoom(room);  // Allow search after winning
-            }
-            else
-            {
-                Console.WriteLine("You lost the round.");
-                player.TakePill();
-                enemy.TakePill();
-            }
-
-            player.CheckHealth();
-            if (enemy.IsDead())
-            {
-                Console.WriteLine("Enemy defeated.");
-            }
-        }
-
-        private int RollDice()
-        {
-            Random random = new Random();
-            return random.Next(1, 7);
-        }
-
-        private void TriggerGameOver(string reason)
-        {
-            if (reason == "madness")
-            {
-                Console.WriteLine("Game Over: You lost your mind.");
-            }
-            else if (reason == "death")
-            {
-                Console.WriteLine("Game Over: You died.");
-            }
-        }
-
-        // Prompt player for input during a round
-        private void PlayRound()
-        {
-            bool isValidInput = false;
-            string userChoice;
-
-            while (!isValidInput)
-            {
-                Console.WriteLine("\nWhat would you like to do?");
-                Console.WriteLine("1. Attack");
-                Console.WriteLine("2. Heal (if available)");
-                Console.WriteLine("3. Use an item from inventory (if available)");
-                Console.WriteLine("4. Search room");
-
-                userChoice = Console.ReadLine();
-                isValidInput = userChoice == "1" || userChoice == "2" || userChoice == "3" || userChoice == "4";
-            }
-
-            switch (userChoice)
-            {
-                case "1":
-                    Attack(player, enemy);
-                    break;
-                case "2":
-                    Heal(player);
-                    break;
-                case "3":
-                    UseItemFromInventory(player);
-                    break;
-                case "4":
-                    SearchRoom(player);
-                    break;
-            }
-        }
-
-        // Player attacks the enemy
-        private void Attack(Player player, Enemy enemy)
-        {
-            int playerRoll = RollDice();
-            Console.WriteLine($"Player rolled a {playerRoll}");
-
-            int enemyRoll = enemy.RollDice();  // Add RollDice method to Enemy class
-            Console.WriteLine($"Enemy rolled a {enemyRoll}");
-
-            if (playerRoll > enemyRoll)
-            {
-                Console.WriteLine("You win this round!");
-                enemy.TakePill();
-            }
-            else
-            {
-                Console.WriteLine("You lose this round.");
-                player.TakePill();
-            }
-
-            player.CheckHealth();
-        }
-
-        // Player heals using an item from their inventory
-        private void Heal(Player player)
-        {
-            if (player.inventory.items.Count == 0)
-            {
-                Console.WriteLine("No healing items available in your inventory.");
-                return;
-            }
-
-            Console.WriteLine("Which item would you like to use for healing?");
-            foreach (var item in player.inventory.items)
-            {
-                if (item.name.Contains("Health"))
+                else
                 {
-                    Console.WriteLine($"{item.name}");
+                    Console.WriteLine("Input cannot be null. Please try again.");
                 }
             }
+        }
 
-            string userItemName = Console.ReadLine();
-            Item selectedItem = player.inventory.items.FirstOrDefault(i => i.name == userItemName);
+        // End the game if the player dies or the poison meter reaches 100
+        GameOver();
+    }
 
-            if (selectedItem != null)
+    // Initializes the 3x3 grid of rooms
+    private void SetupGrid()
+    {
+        grid[0, 2] = new TreasureRoom();  // Top left
+        grid[1, 2] = new CombatRoom();    // Top middle
+        grid[2, 2] = new PuzzleRoom();    // Top right
+
+        grid[0, 1] = new PuzzleRoom();    // Mid left
+        grid[1, 1] = new StartRoom();     // Starting room in the middle
+        grid[2, 1] = new CombatRoom();    // Mid right
+
+        grid[0, 0] = new TreasureRoom();  // Bottom left
+        grid[1, 0] = new CombatRoom();    // Bottom middle
+        grid[2, 0] = new PuzzleRoom();    // Bottom right
+    }
+
+    // Displays a simple introductory message for the game
+    private void DisplayIntro()
+    {
+        Console.WriteLine("Welcome to the twisted asylum...");
+        Console.WriteLine("You find yourself trapped inside, forced into twisted games by the asylum’s deranged inhabitants.");
+    }
+
+    // Allows the player to move to a new room in the grid
+    private void MoveToNextRoom()
+    {
+        Console.WriteLine("Which direction would you like to go? (North, South, East, West)");
+        string? direction = Console.ReadLine()?.ToLower();  // Nullable string input for direction
+        int newX = playerX;  // Temporary variables to store new position
+        int newY = playerY;
+
+        // Update the player's coordinates based on the input
+        switch (direction)
+        {
+            case "north":
+                newY++;  // Move up
+                break;
+            case "south":
+                newY--;  // Move down
+                break;
+            case "east":
+                newX++;  // Move right
+                break;
+            case "west":
+                newX--;  // Move left
+                break;
+            default:
+                Console.WriteLine("Invalid direction.");
+                return;  // Exit if invalid direction
+        }
+
+        // Ensure the player stays within the bounds of the grid
+        if (newX >= 0 && newX < 3 && newY >= 0 && newY < 3)
+        {
+            playerX = newX;
+            playerY = newY;
+        }
+        else
+        {
+            Console.WriteLine("You can't move in that direction.");
+        }
+    }
+
+    // Searches the current room for items or events
+    private void SearchRoom()
+    {
+        Room currentRoom = grid[playerX, playerY];  // Room can't be null after initialization
+        currentRoom.OnRoomSearched(player);  // Trigger the search behavior of the room
+    }
+
+    // Start the Pill Dice Game when encountering an enemy in a CombatRoom
+    private void StartPillDiceGame(CombatRoom room)
+    {
+        Console.WriteLine($"A deranged inmate forces you into their twisted dice game in the {room.RoomName}!");
+
+        // Loop until the player or the enemy is defeated (or poisoned)
+        while (player.hp > 0 && room.Enemy.IsAlive() && player.poisonMeter < 100)
+        {
+            Console.WriteLine("Choose your action:");
+            Console.WriteLine("1: Roll dice and attack");
+            Console.WriteLine("2: Defend");
+            Console.WriteLine("3: Attempt to flee");
+            string? action = Console.ReadLine();
+
+            if (action == "1")
             {
-                selectedItem.Use(player);
+                // Player and enemy roll their dice
+                int playerRoll = DiceRoller.Roll(10);  // Player rolls a random dice (d4, d6, d8, d10)
+                int enemyRoll = room.Enemy.RollDice();  // Enemy rolls a random dice (d4, d6, d8, d10)
+
+                // Display the results of the dice rolls
+                Console.WriteLine($"Your dice roll: {playerRoll}");
+                Console.WriteLine($"Enemy's dice roll: {enemyRoll}");
+
+                // Compare the rolls: if the player wins, they avoid taking a pill
+                if (playerRoll > enemyRoll)
+                {
+                    Console.WriteLine("You win this round! You avoid taking a pill.");
+                    room.Enemy.TakeDamage(playerRoll);  // Player deals damage based on dice roll
+                }
+                else
+                {
+                    Console.WriteLine("You lose this round... You must take a pill.");
+                    player.TakePill();
+                    room.Enemy.TakePill();  // The enemy also takes a pill
+                }
+            }
+            else if (action == "2")
+            {
+                Console.WriteLine("You brace yourself and defend.");
+                int enemyRoll = room.Enemy.RollDice();  // Enemy still rolls
+                player.TakeDamage(Math.Max(0, enemyRoll / 2));  // Take reduced damage
+            }
+            else if (action == "3")
+            {
+                Console.WriteLine("You attempt to flee...");
+                int fleeRoll = DiceRoller.Roll(6);  // Roll to determine if the player flees
+                if (fleeRoll > 3)
+                {
+                    Console.WriteLine("You successfully fled!");
+                    return;  // Exit the combat loop if the player flees
+                }
+                else
+                {
+                    Console.WriteLine("You failed to flee.");
+                    player.TakePill();  // Player takes a pill as a consequence of failure
+                }
             }
             else
             {
-                Console.WriteLine("Invalid item selected.");
+                Console.WriteLine("Invalid action, please choose 1, 2, or 3.");
             }
-        }
 
-        // Player uses an item from their inventory
-        private void UseItemFromInventory(Player player)
-        {
-            if (player.inventory.items.Count == 0)
+            // Check the player's health and poison meter
+            player.CheckStatus();
+
+            // If the player reaches 100% poison, the game ends
+            if (player.poisonMeter >= 100)
             {
-                Console.WriteLine("No items available in your inventory.");
+                Console.WriteLine("You've succumbed to the poison...");
                 return;
             }
-
-            foreach (var item in player.inventory.items)
-            {
-                Console.WriteLine($"{item.name}");
-            }
-
-            string userItemName = Console.ReadLine();
-            Item selectedItem = player.inventory.items.FirstOrDefault(i => i.name == userItemName);
-
-            if (selectedItem != null)
-            {
-                selectedItem.Use(player);
-            }
-            else
-            {
-                Console.WriteLine("Invalid item selected.");
-            }
         }
 
-        // Player searches the current room
-        private void SearchRoom(Player player)
+        if (player.hp <= 0)
         {
-            int randomChance = new Random().Next(1, 4);  // 33% chance to find an item
-
-            if (randomChance == 1)
-            {
-                Item foundItem = GetRandomItem();
-                player.inventory.AddItem(foundItem);
-                Console.WriteLine($"You found {foundItem.name}!");
-            }
-            else
-            {
-                Console.WriteLine("Nothing found in the room.");
-            }
+            Console.WriteLine("You have been defeated...");
         }
-
-        // Generate a random item
-        private Item GetRandomItem()
+        else if (!room.Enemy.IsAlive())
         {
-            Random random = new Random();
-
-            switch (random.Next(0, 4))
-            {
-                case 0:
-                    return new Item("Detox Pill", (player) => {
-                        player.poisonMeter = Math.Max(0, player.poisonMeter - 20);
-                        Console.WriteLine("Detox Pill used. Poison meter reduced by 20%.");
-                    });
-                case 1:
-                    return new Item("Expired Cigarette", (player) => {
-                        player.poisonMeter = Math.Max(0, player.poisonMeter - 10);
-                        player.hp = Math.Max(0, player.hp - (int)(player.hp * 0.10)); // Reduce HP by 10%
-                        Console.WriteLine("Expired Cigarette used. Poison meter reduced by 10%, but lost 10% HP.");
-                    });
-                case 2:
-                    return new Item("Blade", (player) => {
-                        player.poisonMeter = 0;
-                        player.hp = Math.Max(0, player.hp - (int)(player.hp * 0.50)); // Reduce HP by 50%
-                        Console.WriteLine("Blade used. Poison meter reset to 0, but lost 50% HP.");
-                    });
-                case 3:
-                    return new Item("Small Health Pill", (player) => {
-                        player.hp = Math.Min(100, player.hp + (int)(player.hp * 0.20)); // Increase HP by 20%
-                        Console.WriteLine("Small Health Pill used. HP increased by 20%.");
-                    });
-                default:
-                    return null;
-            }
+            Console.WriteLine("You defeated the enemy!");
         }
+    }
 
-        private void MoveToNextRoom()
+    // Game over logic when the player dies or gets poisoned
+    private void GameOver()
+    {
+        if (player.poisonMeter >= 100)
         {
-            // Prompt player to choose the next room
-            // Implement logic to move to the selected room
-            Console.WriteLine("Choose your next room:");
-            // Logic to select and enter a new room
+            Console.WriteLine("You've succumbed to the poison...");
+        }
+        else
+        {
+            Console.WriteLine("You were defeated...");
         }
     }
 }
-

@@ -6,20 +6,9 @@ using System.Threading.Tasks;
 
 namespace DieGame.Scripts
 {
-    class Item
+    public abstract class Item
     {
-        public string name;
-        public Action<Player> effect;  // The effect the item has when used
-
-        public Item(string name, Action<Player> effect)
-        {
-            this.name = name;
-            this.effect = effect;
-        }
-
-        public void Use(Player player)
-        {
-            effect(player);
-        }
+        public abstract string Name { get; }  // Each item will have a name
+        public abstract void Use(Player player);  // Abstract method to use the item
     }
 }

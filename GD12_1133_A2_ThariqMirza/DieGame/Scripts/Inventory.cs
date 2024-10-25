@@ -6,41 +6,38 @@ using System.Threading.Tasks;
 
 namespace DieGame.Scripts
 {
-    class Inventory
+    public class Inventory
     {
-        public List<Item> items = new List<Item>();  // Change to public
+        private List<Item> items = new List<Item>();  // List to store player's items
 
+        // Add an item to the player's inventory
         public void AddItem(Item item)
         {
             items.Add(item);
-            Console.WriteLine($"You received: {item.name}");
+            Console.WriteLine($"Added {item.Name} to your inventory.");
         }
 
-        public void UseItem(string itemName, Player player)
-        {
-            Item item = items.FirstOrDefault(i => i.name == itemName);
-            if (item != null)
-            {
-                item.Use(player);
-                items.Remove(item);
-                Console.WriteLine($"You used: {item.name}");
-            }
-            else
-            {
-                Console.WriteLine("Item not found in inventory.");
-            }
-        }
-
+        // Show the player's inventory
         public void ShowInventory()
         {
             if (items.Count == 0)
             {
-                Console.WriteLine("Inventory is empty.");
+                Console.WriteLine("Your inventory is empty.");
             }
             else
             {
-                Console.WriteLine("Inventory: " + string.Join(", ", items.Select(i => i.name)));
+                Console.WriteLine("Inventory:");
+                foreach (Item item in items)
+                {
+                    Console.WriteLine(item.Name);
+                }
             }
+        }
+
+        // Find an item by name in the inventory
+        public Item? FindItemByName(string name)
+        {
+            return items.FirstOrDefault(i => i.Name == name);
         }
     }
 }
